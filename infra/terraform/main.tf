@@ -24,6 +24,14 @@ resource "aws_security_group" "biblioexchange" {
   }
 
   ingress {
+    description = "SSH - CI/CD GitHub Actions (IP dynamique, a restreindre via SSM ulterieurement)"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     description = "HTTP"
     from_port   = 80
     to_port     = 80
