@@ -35,9 +35,11 @@ jobs:
           flake8 backend/app --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 backend/app --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      - name: Exécution des tests Pytest (Environnement isolé)
+      - name: Exécution des tests Pytest (Environnement isolé SQLite)
         env:
-          PYTHONPATH: .
+          PYTHONPATH: ./backend
+          DATABASE_URL: "sqlite:///:memory:"
+          SECRET_KEY: "ci_test_secret_key_for_jwt_verification"
         run: |
           cd backend
           pytest -v --cov=app tests/
