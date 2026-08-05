@@ -34,3 +34,9 @@ frontend/src/styles/output.css
 # Misc
 .DS_Store
 terraform.tfvars
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+tfplan
