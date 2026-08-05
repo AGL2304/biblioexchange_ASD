@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiblioExchange — Administration</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A22; --paper:#EFEAD9; --paper-2:#E5DEC7;
+    --green:#2F4B3C; --green-dark:#1C3227;
+    --brass:#B8863B; --brass-dark:#8C6528;
+    --rust:#A64B2A; --muted:#6B6558; --line:#D8CFB4;
+  }
+  body{background:var(--paper); color:var(--ink); font-family:'Source Sans 3',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+  .font-mono{font-family:'IBM Plex Mono',monospace;}
+  .card{background:rgba(255,255,255,.55); border:1px solid var(--line);}
+  .row-line{border-color:var(--line);}
+  .badge{font-family:'IBM Plex Mono',monospace; letter-spacing:.03em; border:1px solid transparent;}
+  .badge-active{background:rgba(47,75,60,.1); color:var(--green-dark);}
+  .badge-suspended{background:rgba(166,75,42,.1); color:var(--rust);}
+  .badge-pending{background:rgba(184,134,59,.12); color:var(--brass-dark);}
+  .tab{cursor:pointer; padding-bottom:10px; border-bottom:2px solid transparent; font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
+  .tab.active{color:var(--green-dark); border-color:var(--brass);}
+  .btn-mini{font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; padding:4px 10px; border-radius:2px;}
+  .btn-suspend{background:rgba(166,75,42,.08); color:var(--rust);}
+  .btn-validate{background:rgba(47,75,60,.1); color:var(--green-dark);}
+  .btn-reject{background:rgba(166,75,42,.08); color:var(--rust);}
+  .stat-card{background:rgba(255,255,255,.55); border:1px solid var(--line);}
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b" style="border-color:var(--line)">
+  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="index.html" class="font-display text-2xl" style="color:var(--green-dark)">BiblioExchange</a>
+    <span class="font-mono text-xs uppercase tracking-widest px-2.5 py-1 rounded-sm" style="background:var(--green-dark);color:var(--paper)">Espace admin</span>
+    <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-mono" style="background:var(--rust);color:#fff">AD</div>
+  </div>
+</header>
+
+<section class="max-w-6xl mx-auto px-6 pt-10 pb-6">
+  <h1 class="font-display text-3xl mb-8" style="color:var(--green-dark)">Tableau de modération</h1>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+    <div class="stat-card rounded-sm p-4">
+      <p class="font-mono text-xs uppercase" style="color:var(--muted)">Échanges / 24h</p>
+      <p id="stat-exchanges" class="font-display text-3xl mt-1" style="color:var(--green-dark)">…</p>
+    </div>
+    <div class="stat-card rounded-sm p-4">
+      <p class="font-mono text-xs uppercase" style="color:var(--muted)">Livres en attente</p>
+      <p id="stat-pending-books" class="font-display text-3xl mt-1" style="color:var(--brass-dark)">…</p>
+    </div>
+    <div class="stat-card rounded-sm p-4">
+      <p class="font-mono text-xs uppercase" style="color:var(--muted)">Signalements ouverts</p>
+      <p id="stat-reports" class="font-display text-3xl mt-1" style="color:var(--rust)">…</p>
+    </div>
+    <div class="stat-card rounded-sm p-4">
+      <p class="font-mono text-xs uppercase" style="color:var(--muted)">Comptes suspendus</p>
+      <p id="stat-suspended" class="font-display text-3xl mt-1" style="color:var(--ink)">…</p>
+    </div>
+  </div>
+
+  <div class="flex gap-8 border-b mb-6" style="border-color:var(--line)">
+    <div class="tab active" data-tab="users">Utilisateurs</div>
+    <div class="tab" data-tab="books">Livres à valider</div>
+    <div class="tab" data-tab="reports">Signalements</div>
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-6 pb-20">
+  <div class="card rounded-sm" id="panel-users"></div>
+  <div class="card rounded-sm hidden" id="panel-books"></div>
+  <div class="card rounded-sm hidden" id="panel-reports"></div>
+</section>
+
+<script src="js/api.js"></script>
+<script>
+if (!api.isLoggedIn()) window.location.href = "login.html";
+
+async function loadStats() {
+  try {
+    const [ex, mod] = await Promise.all([api.adminStatsExchanges(), api.adminStatsModeration()]);
+    document.getElementById("stat-exchanges").textContent = ex.crees_24h;
+    document.getElementById("stat-pending-books").textContent = mod.livres_en_attente;
+    document.getElementById("stat-reports").textContent = mod.signalements_ouverts;
+  } catch (err) {
+    // 403 le plus probable si le compte connecté n'est pas admin
+    document.getElementById("panel-users").innerHTML =
+      `<p class="px-6 py-5 font-mono text-sm" style="color:var(--rust)">Accès refusé : ${err.message}. Ce compte n'a pas le rôle admin.</p>`;
+  }
+}
+
+async function loadUsers() {
+  const panel = document.getElementById("panel-users");
+  try {
+    const users = await api.adminUsers();
+    document.getElementById("stat-suspended").textContent = users.filter(u => u.statut_compte === "suspendu").length;
+    panel.innerHTML = users.map(u => `
+      <div class="flex items-center justify-between px-6 py-4 border-b row-line last:border-b-0" data-id="${u.id}">
+        <div>
+          <p class="font-display text-base" style="color:var(--green-dark)">${u.nom}</p>
+          <p class="text-sm" style="color:var(--muted)">${u.email}</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="badge ${u.statut_compte==='actif' ? 'badge-active' : 'badge-suspended'} text-xs px-2 py-1 rounded-sm">${u.statut_compte}</span>
+          ${u.statut_compte==='actif'
+            ? `<button class="js-suspend btn-mini btn-suspend" data-id="${u.id}">Suspendre</button>`
+            : `<button class="js-reactivate btn-mini btn-validate" data-id="${u.id}">Réactiver</button>`}
+        </div>
+      </div>`).join("") || `<p class="px-6 py-5 font-mono text-sm" style="color:var(--muted)">Aucun utilisateur.</p>`;
+
+    panel.querySelectorAll(".js-suspend").forEach(el => el.addEventListener("click", async () => {
+      await api.adminSuspendUser(el.dataset.id); loadUsers();
+    }));
+    panel.querySelectorAll(".js-reactivate").forEach(el => el.addEventListener("click", async () => {
+      await api.adminReactivateUser(el.dataset.id); loadUsers();
+    }));
+  } catch (err) {
+    panel.innerHTML = `<p class="px-6 py-5 font-mono text-sm" style="color:var(--rust)">Erreur : ${err.message}</p>`;
+  }
+}
+
+async function loadPendingBooks() {
+  const panel = document.getElementById("panel-books");
+  try {
+    const books = await api.adminPendingBooks();
+    panel.innerHTML = books.map(b => `
+      <div class="flex items-center justify-between px-6 py-4 border-b row-line last:border-b-0" data-id="${b.id}">
+        <div>
+          <p class="font-display text-base" style="color:var(--green-dark)">${b.titre}</p>
+          <p class="text-sm" style="color:var(--muted)">${b.auteur}</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="badge badge-pending text-xs px-2 py-1 rounded-sm">en attente</span>
+          <button class="js-validate btn-mini btn-validate" data-id="${b.id}">Valider</button>
+          <button class="js-reject btn-mini btn-reject" data-id="${b.id}">Rejeter</button>
+        </div>
+      </div>`).join("") || `<p class="px-6 py-5 font-mono text-sm" style="color:var(--muted)">Aucun livre en attente.</p>`;
+
+    panel.querySelectorAll(".js-validate").forEach(el => el.addEventListener("click", async () => {
+      await api.adminValidateBook(el.dataset.id); loadPendingBooks(); loadStats();
+    }));
+    panel.querySelectorAll(".js-reject").forEach(el => el.addEventListener("click", async () => {
+      await api.adminRejectBook(el.dataset.id); loadPendingBooks(); loadStats();
+    }));
+  } catch (err) {
+    panel.innerHTML = `<p class="px-6 py-5 font-mono text-sm" style="color:var(--rust)">Erreur : ${err.message}</p>`;
+  }
+}
+
+async function loadReports() {
+  const panel = document.getElementById("panel-reports");
+  try {
+    const reports = await api.adminReports("ouvert");
+    panel.innerHTML = reports.map(r => `
+      <div class="px-6 py-4 border-b row-line last:border-b-0" data-id="${r.id}">
+        <div class="flex items-center justify-between">
+          <p class="font-display text-base" style="color:var(--green-dark)">${r.cible_type === 'book' ? 'Livre' : 'Utilisateur'} signalé</p>
+          <button class="js-resolve btn-mini btn-validate" data-id="${r.id}">Marquer traité</button>
+        </div>
+        <p class="text-sm mt-1" style="color:var(--muted)">${r.motif}</p>
+      </div>`).join("") || `<p class="px-6 py-5 font-mono text-sm" style="color:var(--muted)">Aucun signalement ouvert.</p>`;
+
+    panel.querySelectorAll(".js-resolve").forEach(el => el.addEventListener("click", async () => {
+      await api.adminResolveReport(el.dataset.id); loadReports(); loadStats();
+    }));
+  } catch (err) {
+    panel.innerHTML = `<p class="px-6 py-5 font-mono text-sm" style="color:var(--rust)">Erreur : ${err.message}</p>`;
+  }
+}
+
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    ["users","books","reports"].forEach(name => {
+      document.getElementById("panel-"+name).classList.toggle("hidden", name !== tab.dataset.tab);
+    });
+  });
+});
+
+loadStats();
+loadUsers();
+loadPendingBooks();
+loadReports();
+</script>
+</body>
+</html>

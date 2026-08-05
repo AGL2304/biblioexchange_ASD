@@ -1,0 +1,21 @@
+groups:
+  - name: biblioexchange
+    rules:
+      - alert: APIDown
+        expr: up{job="biblioexchange-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "L'API BiblioExchange ne répond plus"
+
+      - alert: TauxErreurEleve
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taux d'erreurs 5xx élevé sur l'API"
+
+      # TODO: alerte métier — pic de signalements en attente
+      # (nécessite l'export de la métrique custom depuis /admin/stats/moderation)

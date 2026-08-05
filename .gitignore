@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# pytest
+.pytest_cache/
+
+# Environments
+.env
+.env.*
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+
+# Byte-compiled / logs
+*.log
+
+# Node
+node_modules/
+
+# Frontend build
+frontend/src/styles/output.css
+
+# Docker
+*.dockerignore
+
+# Misc
+.DS_Store

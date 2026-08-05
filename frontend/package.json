@@ -1,0 +1,12 @@
+{
+  "name": "biblioexchange-frontend",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css --minify",
+    "watch": "tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

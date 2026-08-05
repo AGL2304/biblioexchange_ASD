@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiblioExchange — Proposer un échange</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A22; --paper:#EFEAD9; --paper-2:#E5DEC7;
+    --green:#2F4B3C; --green-dark:#1C3227;
+    --brass:#B8863B; --brass-dark:#8C6528;
+    --rust:#A64B2A; --muted:#6B6558; --line:#D8CFB4;
+  }
+  body{background:var(--paper); color:var(--ink); font-family:'Source Sans 3',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+  .font-mono{font-family:'IBM Plex Mono',monospace;}
+  .card{background:rgba(255,255,255,.5); border:1px solid var(--line);}
+  .book-pick{border:1.5px solid var(--line); cursor:pointer; transition:.15s;}
+  .book-pick.selected{border-color:var(--green); background:rgba(47,75,60,.06);}
+  .field{border:1px solid var(--line); background:#fff;}
+  .field:focus{outline:none; border-color:var(--brass);}
+  .nav-link{position:relative;}
+  .nav-link.active::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--brass);}
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b" style="border-color:var(--line)">
+  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="index.html" class="font-display text-2xl" style="color:var(--green-dark)">BiblioExchange</a>
+    <nav class="hidden md:flex gap-8 text-sm" style="color:var(--muted)">
+      <a href="index.html" class="nav-link">Accueil</a>
+      <a href="mes-livres.html" class="nav-link">Mes livres</a>
+      <a href="proposer-echange.html" class="nav-link active" style="color:var(--ink)">Échanges</a>
+      <a href="notifications.html" class="nav-link">Notifications</a>
+      <a href="profil.html" class="nav-link">Profil</a>
+    </nav>
+    <div id="auth-slot"></div>
+  </div>
+</header>
+
+<section class="max-w-3xl mx-auto px-6 pt-12 pb-4">
+  <p class="font-mono text-xs uppercase tracking-widest mb-2" style="color:var(--brass-dark)">Fiche d'échange</p>
+  <h1 id="page-title" class="font-display text-3xl" style="color:var(--green-dark)">Proposer un échange</h1>
+</section>
+
+<section class="max-w-3xl mx-auto px-6 pb-20 space-y-8">
+
+  <div class="card rounded-sm p-6">
+    <h2 class="font-mono text-xs uppercase tracking-widest mb-4" style="color:var(--muted)">1 — Choisir votre livre à proposer</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="my-books-pick"></div>
+  </div>
+
+  <div class="card rounded-sm p-6">
+    <h2 class="font-mono text-xs uppercase tracking-widest mb-4" style="color:var(--muted)">2 — Lieu du rendez-vous</h2>
+    <input type="text" placeholder="Ex. Bibliothèque municipale, 12 rue des Lilas"
+      class="w-full px-4 py-3 rounded-sm field">
+  </div>
+
+  <div class="card rounded-sm p-6">
+    <h2 class="font-mono text-xs uppercase tracking-widest mb-4" style="color:var(--muted)">3 — Créneau</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <input type="date" class="px-4 py-3 rounded-sm field">
+      <input type="time" class="px-4 py-3 rounded-sm field">
+      <select class="px-4 py-3 rounded-sm field">
+        <option>15 min</option>
+        <option selected>30 min</option>
+        <option>45 min</option>
+        <option>1 h</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between pt-2">
+    <a href="livre.html" class="font-mono text-sm uppercase" style="color:var(--muted)">← Annuler</a>
+    <button class="px-7 py-3.5 rounded-sm font-mono text-sm uppercase tracking-wide text-white" style="background:var(--green-dark)">
+      Valider la proposition
+    </button>
+  </div>
+</section>
+
+<script src="js/api.js"></script>
+<script>
+function renderNav() {
+  const nav = document.getElementById("auth-slot");
+  if (!nav) return;
+  if (api.isLoggedIn()) {
+    nav.innerHTML = `<button id="logout-btn" class="font-mono text-xs uppercase" style="color:var(--muted)">Deconnexion</button>`;
+    document.getElementById("logout-btn").addEventListener("click", api.logout);
+  } else {
+    nav.innerHTML = `<a href="login.html" class="font-mono text-xs uppercase px-3 py-1.5 rounded-sm text-white" style="background:var(--green-dark)">Connexion</a>`;
+  }
+}
+renderNav();
+if (!api.isLoggedIn()) window.location.href = "login.html";
+
+const requestedId = new URLSearchParams(window.location.search).get("id");
+let selectedOfferedId = null;
+
+async function init() {
+  try {
+    const requested = await api.getBook(requestedId);
+    document.getElementById("page-title").textContent = `Proposer un échange pour « ${requested.titre} »`;
+  } catch (_) { /* titre générique conservé */ }
+
+  const grid = document.getElementById("my-books-pick");
+  try {
+    const myBooks = (await api.myBooks()).filter(b => b.statut === "disponible");
+    if (myBooks.length === 0) {
+      grid.innerHTML = `<p class="col-span-2 font-mono text-sm" style="color:var(--muted)">Vous n'avez aucun livre disponible à proposer.</p>`;
+      return;
+    }
+    grid.innerHTML = myBooks.map(b => `
+      <div class="book-pick rounded-sm p-4" data-id="${b.id}">
+        <p class="font-display text-base" style="color:var(--green-dark)">${b.titre}</p>
+        <p class="text-sm mt-1" style="color:var(--muted)">${b.auteur}</p>
+      </div>`).join("");
+
+    grid.querySelectorAll(".book-pick").forEach(el => {
+      el.addEventListener("click", () => {
+        grid.querySelectorAll(".book-pick").forEach(o => o.classList.remove("selected"));
+        el.classList.add("selected");
+        selectedOfferedId = el.dataset.id;
+      });
+    });
+  } catch (err) {
+    grid.innerHTML = `<p style="color:var(--rust)">Erreur : ${err.message}</p>`;
+  }
+}
+init();
+
+document.querySelector("section button.px-7").addEventListener("click", async () => {
+  if (!selectedOfferedId) { alert("Choisissez un livre à proposer."); return; }
+  const lieu = document.querySelector('input[type="text"]').value;
+  const date = document.querySelector('input[type="date"]').value;
+  const time = document.querySelector('input[type="time"]').value;
+  const dureeLabel = document.querySelector("select").value;
+  const duree = parseInt(dureeLabel) || 30;
+  if (!lieu || !date || !time) { alert("Merci de renseigner le lieu et le créneau."); return; }
+
+  try {
+    const exchange = await api.proposeExchange(selectedOfferedId, requestedId);
+    await api.proposeRendezvous(exchange.id, {
+      lieu,
+      date_heure: new Date(`${date}T${time}`).toISOString(),
+      duree_minutes: duree,
+    });
+    alert("Proposition envoyée !");
+    window.location.href = "index.html";
+  } catch (err) {
+    alert("Erreur : " + err.message);
+  }
+});
+</script>
+</body>
+</html>

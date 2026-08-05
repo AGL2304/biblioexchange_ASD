@@ -1,0 +1,55 @@
+---
+- name: Provisionner le serveur BiblioExchange
+  hosts: biblioexchange
+  become: true
+
+  tasks:
+    - name: Mettre à jour le cache apt
+      apt:
+        update_cache: true
+
+    - name: Installer les paquets de base
+      apt:
+        name:
+          - docker.io
+          - docker-compose-plugin
+          - ufw
+          - fail2ban
+        state: present
+
+    - name: Créer un utilisateur applicatif non-root
+      user:
+        name: deploy
+        groups: docker
+        append: true
+        shell: /bin/bash
+
+    - name: Durcir la configuration SSH (clé uniquement)
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^PermitRootLogin', line: 'PermitRootLogin no' }
+      notify: restart sshd
+
+    - name: Activer le firewall (22, 80, 443)
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+      loop:
+        - "22"
+        - "80"
+        - "443"
+
+    - name: Activer ufw
+      ufw:
+        state: enabled
+        policy: deny
+
+  handlers:
+    - name: restart sshd
+      service:
+        name: ssh
+        state: restarted

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiblioExchange — Détail du livre</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A22; --paper:#EFEAD9; --paper-2:#E5DEC7;
+    --green:#2F4B3C; --green-dark:#1C3227;
+    --brass:#B8863B; --brass-dark:#8C6528;
+    --rust:#A64B2A; --muted:#6B6558; --line:#D8CFB4;
+  }
+  body{background:var(--paper); color:var(--ink); font-family:'Source Sans 3',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+  .font-mono{font-family:'IBM Plex Mono',monospace;}
+  .stamp{border:1.5px dashed var(--green); color:var(--green-dark); transform:rotate(-2deg); font-family:'IBM Plex Mono',monospace; letter-spacing:.04em;}
+  .nav-link{position:relative;}
+  .nav-link.active::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--brass);}
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b" style="border-color:var(--line)">
+  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="index.html" class="font-display text-2xl" style="color:var(--green-dark)">BiblioExchange</a>
+    <nav class="hidden md:flex gap-8 text-sm" style="color:var(--muted)">
+      <a href="index.html" class="nav-link active" style="color:var(--ink)">Accueil</a>
+      <a href="mes-livres.html" class="nav-link">Mes livres</a>
+      <a href="proposer-echange.html" class="nav-link">Échanges</a>
+      <a href="notifications.html" class="nav-link">Notifications</a>
+      <a href="profil.html" class="nav-link">Profil</a>
+    </nav>
+    <div id="auth-slot"></div>
+  </div>
+</header>
+
+<section id="book-detail" class="max-w-5xl mx-auto px-6 py-14">
+  <p class="font-mono text-sm" style="color:var(--muted)">Chargement…</p>
+</section>
+
+<script src="js/api.js"></script>
+<script>
+function renderNav() {
+  const nav = document.getElementById("auth-slot");
+  if (!nav) return;
+  if (api.isLoggedIn()) {
+    nav.innerHTML = `<button id="logout-btn" class="font-mono text-xs uppercase" style="color:var(--muted)">Deconnexion</button>`;
+    document.getElementById("logout-btn").addEventListener("click", api.logout);
+  } else {
+    nav.innerHTML = `<a href="login.html" class="font-mono text-xs uppercase px-3 py-1.5 rounded-sm text-white" style="background:var(--green-dark)">Connexion</a>`;
+  }
+}
+renderNav();
+const statusLabels = { disponible: "Disponible", indisponible: "Indisponible", en_negociation: "En négociation" };
+
+async function loadBook() {
+  const container = document.getElementById("book-detail");
+  const id = new URLSearchParams(window.location.search).get("id");
+  if (!id) {
+    container.innerHTML = `<p style="color:var(--rust)">Aucun livre spécifié.</p>`;
+    return;
+  }
+  try {
+    const b = await api.getBook(id);
+    container.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-12">
+        <div class="h-96 rounded-sm flex items-end p-6" style="background:linear-gradient(160deg,#2F4B3C,#1C3227)">
+          <span class="font-mono text-xs text-white/60 uppercase tracking-widest">${b.categorie || "Non classé"}</span>
+        </div>
+        <div>
+          <div class="px-2.5 py-1 inline-block text-xs stamp mb-5">${statusLabels[b.statut]}</div>
+          <h1 class="font-display text-4xl leading-tight" style="color:var(--green-dark)">${b.titre}</h1>
+          <p class="mt-2 text-lg" style="color:var(--muted)">${b.auteur}</p>
+          <dl class="mt-8 grid grid-cols-2 gap-6 max-w-md font-mono text-xs uppercase tracking-wide" style="color:var(--muted)">
+            <div><dt class="mb-1">Catégorie</dt><dd style="color:var(--ink)">${b.categorie || "—"}</dd></div>
+            <div><dt class="mb-1">État</dt><dd style="color:var(--ink)">${b.etat || "—"}</dd></div>
+          </dl>
+          ${b.statut === "disponible"
+            ? `<a href="proposer-echange.html?id=${b.id}" class="mt-10 inline-block px-7 py-3.5 rounded-sm font-mono text-sm uppercase tracking-wide text-white" style="background:var(--green-dark)">Proposer un échange</a>`
+            : `<p class="mt-10 font-mono text-sm" style="color:var(--muted)">Ce livre n'est pas disponible pour un échange en ce moment.</p>`}
+        </div>
+      </div>`;
+  } catch (err) {
+    container.innerHTML = `<p style="color:var(--rust)">Erreur : ${err.message}</p>`;
+  }
+}
+loadBook();
+</script>
+</body>
+</html>

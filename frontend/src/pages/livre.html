@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiblioExchange — Détail du livre</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A22; --paper:#EFEAD9; --paper-2:#E5DEC7;
+    --green:#2F4B3C; --green-dark:#1C3227;
+    --brass:#B8863B; --brass-dark:#8C6528;
+    --rust:#A64B2A; --muted:#6B6558; --line:#D8CFB4;
+  }
+  body{background:var(--paper); color:var(--ink); font-family:'Source Sans 3',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+  .font-mono{font-family:'IBM Plex Mono',monospace;}
+  .stamp{border:1.5px dashed var(--green); color:var(--green-dark); transform:rotate(-2deg); font-family:'IBM Plex Mono',monospace; letter-spacing:.04em;}
+  .nav-link{position:relative;}
+  .nav-link.active::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--brass);}
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b" style="border-color:var(--line)">
+  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="index.html" class="font-display text-2xl" style="color:var(--green-dark)">BiblioExchange</a>
+    <nav class="hidden md:flex gap-8 text-sm" style="color:var(--muted)">
+      <a href="index.html" class="nav-link active" style="color:var(--ink)">Accueil</a>
+      <a href="mes-livres.html" class="nav-link">Mes livres</a>
+      <a href="proposer-echange.html" class="nav-link">Échanges</a>
+      <a href="notifications.html" class="nav-link">Notifications</a>
+      <a href="profil.html" class="nav-link">Profil</a>
+    </nav>
+    <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-mono" style="background:var(--green-dark);color:var(--paper)">GA</div>
+  </div>
+</header>
+
+<section class="max-w-5xl mx-auto px-6 py-14 grid grid-cols-1 md:grid-cols-[280px_1fr] gap-12">
+  <div class="h-96 rounded-sm flex items-end p-6" style="background:linear-gradient(160deg,#2F4B3C,#1C3227)">
+    <span class="font-mono text-xs text-white/60 uppercase tracking-widest">Roman · 1980</span>
+  </div>
+
+  <div>
+    <div class="px-2.5 py-1 inline-block text-xs stamp mb-5">Disponible</div>
+    <h1 class="font-display text-4xl leading-tight" style="color:var(--green-dark)">Les Racines du ciel</h1>
+    <p class="mt-2 text-lg" style="color:var(--muted)">Romain Gary</p>
+
+    <dl class="mt-8 grid grid-cols-3 gap-6 max-w-md font-mono text-xs uppercase tracking-wide" style="color:var(--muted)">
+      <div><dt class="mb-1">Catégorie</dt><dd style="color:var(--ink)">Roman</dd></div>
+      <div><dt class="mb-1">État</dt><dd style="color:var(--ink)">Bon état</dd></div>
+      <div><dt class="mb-1">Propriétaire</dt><dd style="color:var(--ink)">M. Sissoko</dd></div>
+    </dl>
+
+    <p class="mt-8 max-w-md leading-relaxed" style="color:var(--ink)">
+      Prix Goncourt 1956. Un plaidoyer romanesque pour la préservation des éléphants d'Afrique,
+      porté par des personnages en quête de sens face à la déshumanisation du monde moderne.
+    </p>
+
+    <a href="proposer-echange.html" class="mt-10 inline-block px-7 py-3.5 rounded-sm font-mono text-sm uppercase tracking-wide text-white" style="background:var(--green-dark)">
+      Proposer un échange
+    </a>
+  </div>
+</section>
+
+</body>
+</html>

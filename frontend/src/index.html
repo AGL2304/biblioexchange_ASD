@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiblioExchange — Accueil</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A22; --paper:#EFEAD9; --paper-2:#E5DEC7;
+    --green:#2F4B3C; --green-dark:#1C3227;
+    --brass:#B8863B; --brass-dark:#8C6528;
+    --rust:#A64B2A; --muted:#6B6558; --line:#D8CFB4;
+  }
+  body{background:var(--paper); color:var(--ink); font-family:'Source Sans 3',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+  .font-mono{font-family:'IBM Plex Mono',monospace;}
+  .card-shadow{box-shadow:0 1px 0 var(--line), 0 8px 20px -12px rgba(30,42,34,.25);}
+  .stamp{
+    border:1.5px dashed var(--brass-dark); transform:rotate(-2deg);
+    font-family:'IBM Plex Mono',monospace; letter-spacing:.04em;
+  }
+  .stamp-unavail{ border-color:var(--rust); color:var(--rust); }
+  .stamp-avail{ border-color:var(--green); color:var(--green-dark); }
+  .nav-link{position:relative;}
+  .nav-link.active::after{
+    content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px; background:var(--brass);
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b" style="border-color:var(--line)">
+  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="index.html" class="font-display text-2xl" style="color:var(--green-dark)">BiblioExchange</a>
+    <nav class="hidden md:flex gap-8 text-sm" style="color:var(--muted)">
+      <a href="index.html" class="nav-link active" style="color:var(--ink)">Accueil</a>
+      <a href="mes-livres.html" class="nav-link">Mes livres</a>
+      <a href="proposer-echange.html" class="nav-link">Échanges</a>
+      <a href="notifications.html" class="nav-link">Notifications</a>
+      <a href="profil.html" class="nav-link">Profil</a>
+    </nav>
+    <div id="auth-slot"></div>
+  </div>
+</header>
+
+<section class="max-w-6xl mx-auto px-6 pt-14 pb-10">
+  <p class="font-mono text-xs uppercase tracking-widest mb-3" style="color:var(--brass-dark)">Catalogue de la communauté</p>
+  <h1 class="font-display text-4xl md:text-5xl leading-tight max-w-2xl" style="color:var(--green-dark)">
+    Des livres qui changent de mains, pas d'histoire.
+  </h1>
+  <p class="mt-4 max-w-xl" style="color:var(--muted)">
+    Empruntez, proposez, échangez. Chaque livre disponible ici attend un lecteur — et une fiche de retour au nom du prochain.
+  </p>
+
+  <div class="mt-8 flex flex-col sm:flex-row gap-3 max-w-2xl">
+    <input type="text" placeholder="Titre, auteur, catégorie…"
+      class="flex-1 px-4 py-3 rounded-sm border bg-white/60 focus:outline-none focus:ring-2"
+      style="border-color:var(--line); --tw-ring-color:var(--brass)">
+    <button class="px-6 py-3 rounded-sm font-mono text-sm uppercase tracking-wide text-white" style="background:var(--green-dark)">
+      Rechercher
+    </button>
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-6 pb-20">
+  <div class="flex items-baseline justify-between mb-6">
+    <h2 class="font-display text-xl" style="color:var(--green-dark)">Disponibles à l'échange</h2>
+    <span id="book-count" class="font-mono text-xs" style="color:var(--muted)">…</span>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="book-grid"></div>
+</section>
+
+<footer class="border-t py-8 text-center font-mono text-xs" style="border-color:var(--line); color:var(--muted)">
+  BiblioExchange — fiche de prêt n°2, édition communautaire
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+const spinePalette = ["#2F4B3C", "#8C6528", "#1C3227", "#B8863B", "#6B6558"];
+const statusMap = {
+  disponible:{label:"Disponible", cls:"stamp-avail"},
+  indisponible:{label:"Indisponible", cls:"stamp-unavail"},
+  en_negociation:{label:"En négociation", cls:"stamp-unavail"},
+};
+
+function renderNav() {
+  const nav = document.getElementById("auth-slot");
+  if (api.isLoggedIn()) {
+    nav.innerHTML = `<button id="logout-btn" class="font-mono text-xs uppercase" style="color:var(--muted)">Déconnexion</button>`;
+    document.getElementById("logout-btn").addEventListener("click", api.logout);
+  } else {
+    nav.innerHTML = `<a href="login.html" class="font-mono text-xs uppercase px-3 py-1.5 rounded-sm text-white" style="background:var(--green-dark)">Connexion</a>`;
+  }
+}
+
+async function loadBooks(q) {
+  const grid = document.getElementById("book-grid");
+  grid.innerHTML = `<p class="font-mono text-sm" style="color:var(--muted)">Chargement du catalogue…</p>`;
+  try {
+    const books = await api.listBooks(q);
+    document.getElementById("book-count").textContent = `${books.length} ouvrage${books.length > 1 ? "s" : ""}`;
+    if (books.length === 0) {
+      grid.innerHTML = `<p class="font-mono text-sm" style="color:var(--muted)">Aucun livre disponible pour l'instant.</p>`;
+      return;
+    }
+    grid.innerHTML = books.map((b, i) => {
+      const s = statusMap[b.statut];
+      const spine = spinePalette[i % spinePalette.length];
+      return `
+      <a href="livre.html?id=${b.id}" class="block bg-white/50 card-shadow rounded-sm overflow-hidden group">
+        <div class="h-32 flex items-end px-4 pb-3" style="background:${spine}">
+          <span class="font-mono text-xs text-white/70 uppercase tracking-widest">${b.categorie || "Non classé"}</span>
+        </div>
+        <div class="p-4">
+          <h3 class="font-display text-lg leading-snug" style="color:var(--green-dark)">${b.titre}</h3>
+          <p class="text-sm mt-1" style="color:var(--muted)">${b.auteur}</p>
+          <div class="mt-4 inline-block px-2.5 py-1 text-xs stamp ${s.cls}">${s.label}</div>
+        </div>
+      </a>`;
+    }).join("");
+  } catch (err) {
+    grid.innerHTML = `<p class="font-mono text-sm" style="color:var(--rust)">Erreur de chargement : ${err.message}</p>`;
+  }
+}
+
+renderNav();
+loadBooks();
+
+document.querySelector("section button").addEventListener("click", () => {
+  loadBooks(document.querySelector("section input[type=text]").value);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiblioExchange — Profil</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A22; --paper:#EFEAD9; --paper-2:#E5DEC7;
+    --green:#2F4B3C; --green-dark:#1C3227;
+    --brass:#B8863B; --brass-dark:#8C6528;
+    --rust:#A64B2A; --muted:#6B6558; --line:#D8CFB4;
+  }
+  body{background:var(--paper); color:var(--ink); font-family:'Source Sans 3',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+  .font-mono{font-family:'IBM Plex Mono',monospace;}
+  .card{background:rgba(255,255,255,.55); border:1px solid var(--line);}
+  .field{border:1px solid var(--line); background:#fff;}
+  .field:focus{outline:none; border-color:var(--brass);}
+  .stamp{border:1.5px dashed var(--brass-dark); font-family:'IBM Plex Mono',monospace; letter-spacing:.04em; color:var(--brass-dark);}
+  .row-line{border-color:var(--line);}
+  .nav-link{position:relative;}
+  .nav-link.active::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--brass);}
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b" style="border-color:var(--line)">
+  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="index.html" class="font-display text-2xl" style="color:var(--green-dark)">BiblioExchange</a>
+    <nav class="hidden md:flex gap-8 text-sm" style="color:var(--muted)">
+      <a href="index.html" class="nav-link">Accueil</a>
+      <a href="mes-livres.html" class="nav-link">Mes livres</a>
+      <a href="proposer-echange.html" class="nav-link">Échanges</a>
+      <a href="notifications.html" class="nav-link">Notifications</a>
+      <a href="profil.html" class="nav-link active" style="color:var(--ink)">Profil</a>
+    </nav>
+    <div id="auth-slot"></div>
+  </div>
+</header>
+
+<section class="max-w-4xl mx-auto px-6 pt-12 pb-6">
+  <p class="font-mono text-xs uppercase tracking-widest mb-2" style="color:var(--brass-dark)">Fiche de membre</p>
+  <h1 class="font-display text-3xl" style="color:var(--green-dark)">Mon profil</h1>
+</section>
+
+<section class="max-w-4xl mx-auto px-6 pb-20 grid grid-cols-1 md:grid-cols-[1fr_320px] gap-6">
+
+  <div class="card rounded-sm p-6">
+    <h2 class="font-mono text-xs uppercase tracking-widest mb-5" style="color:var(--muted)">Informations</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div>
+        <label class="font-mono text-xs uppercase" style="color:var(--muted)">Nom</label>
+        <input id="field-nom" type="text" class="w-full mt-1.5 px-4 py-3 rounded-sm field">
+      </div>
+      <div>
+        <label class="font-mono text-xs uppercase" style="color:var(--muted)">Email</label>
+        <input id="field-email" type="email" class="w-full mt-1.5 px-4 py-3 rounded-sm field">
+      </div>
+    </div>
+    <button id="save-info" class="mt-6 px-6 py-3 rounded-sm font-mono text-sm uppercase tracking-wide text-white" style="background:var(--green-dark)">
+      Enregistrer
+    </button>
+    <p id="info-feedback" class="mt-3 text-sm hidden"></p>
+
+    <div class="mt-10 pt-6 border-t" style="border-color:var(--line)">
+      <h2 class="font-mono text-xs uppercase tracking-widest mb-4" style="color:var(--muted)">Mot de passe</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <input id="field-password" type="password" placeholder="Nouveau mot de passe" minlength="8" class="px-4 py-3 rounded-sm field">
+        <input id="field-password-confirm" type="password" placeholder="Confirmer" minlength="8" class="px-4 py-3 rounded-sm field">
+      </div>
+      <button id="save-password" class="mt-6 px-6 py-3 rounded-sm font-mono text-sm uppercase tracking-wide" style="border:1px solid var(--brass-dark); color:var(--brass-dark)">
+        Mettre à jour
+      </button>
+      <p id="password-feedback" class="mt-3 text-sm hidden"></p>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <div class="card rounded-sm p-6 text-center">
+      <div id="avatar-initials" class="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-2xl font-mono" style="background:var(--green-dark);color:var(--paper)">…</div>
+      <p id="display-nom" class="font-display text-lg mt-4" style="color:var(--green-dark)">…</p>
+      <div id="member-since" class="mt-3 inline-block px-2.5 py-1 text-xs stamp">…</div>
+    </div>
+
+    <div class="card rounded-sm p-6">
+      <h2 class="font-mono text-xs uppercase tracking-widest mb-4" style="color:var(--muted)">Historique</h2>
+      <dl class="space-y-3 font-mono text-sm">
+        <div class="flex justify-between"><dt style="color:var(--muted)">Livres publiés</dt><dd id="hist-books" style="color:var(--ink)">…</dd></div>
+        <div class="flex justify-between"><dt style="color:var(--muted)">Échanges réalisés</dt><dd id="hist-done" style="color:var(--ink)">…</dd></div>
+        <div class="flex justify-between"><dt style="color:var(--muted)">Échanges en cours</dt><dd id="hist-ongoing" style="color:var(--ink)">…</dd></div>
+      </dl>
+    </div>
+  </div>
+
+</section>
+
+<script src="js/api.js"></script>
+<script>
+if (!api.isLoggedIn()) window.location.href = "login.html";
+
+function renderNav() {
+  const nav = document.getElementById("auth-slot");
+  nav.innerHTML = `<button id="logout-btn" class="font-mono text-xs uppercase" style="color:var(--muted)">Deconnexion</button>`;
+  document.getElementById("logout-btn").addEventListener("click", api.logout);
+}
+renderNav();
+
+function initials(nom) {
+  return nom.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+}
+
+async function loadProfile() {
+  try {
+    const me = await api.me();
+    document.getElementById("field-nom").value = me.nom;
+    document.getElementById("field-email").value = me.email;
+    document.getElementById("avatar-initials").textContent = initials(me.nom);
+    document.getElementById("display-nom").textContent = me.nom;
+    document.getElementById("member-since").textContent =
+      "Membre depuis " + new Date(me.created_at).getFullYear();
+
+    const [books, exchanges] = await Promise.all([api.myBooks(), api.myExchanges()]);
+    document.getElementById("hist-books").textContent = books.length;
+    document.getElementById("hist-done").textContent = exchanges.filter(e => e.statut === "termine").length;
+    document.getElementById("hist-ongoing").textContent = exchanges.filter(e => ["propose", "accepte"].includes(e.statut)).length;
+  } catch (err) {
+    console.error(err);
+  }
+}
+loadProfile();
+
+document.getElementById("save-info").addEventListener("click", async () => {
+  const feedback = document.getElementById("info-feedback");
+  try {
+    await api.updateMe({ nom: document.getElementById("field-nom").value });
+    const newEmail = document.getElementById("field-email").value;
+    await api.updateCredentials({ email: newEmail });
+    feedback.textContent = "Informations mises à jour.";
+    feedback.style.color = "var(--green-dark)";
+    feedback.classList.remove("hidden");
+    loadProfile();
+  } catch (err) {
+    feedback.textContent = "Erreur : " + err.message;
+    feedback.style.color = "var(--rust)";
+    feedback.classList.remove("hidden");
+  }
+});
+
+document.getElementById("save-password").addEventListener("click", async () => {
+  const feedback = document.getElementById("password-feedback");
+  const pass = document.getElementById("field-password").value;
+  const confirm = document.getElementById("field-password-confirm").value;
+  if (!pass || pass !== confirm) {
+    feedback.textContent = "Les deux mots de passe doivent correspondre.";
+    feedback.style.color = "var(--rust)";
+    feedback.classList.remove("hidden");
+    return;
+  }
+  try {
+    await api.updateCredentials({ password: pass });
+    feedback.textContent = "Mot de passe mis à jour.";
+    feedback.style.color = "var(--green-dark)";
+    feedback.classList.remove("hidden");
+    document.getElementById("field-password").value = "";
+    document.getElementById("field-password-confirm").value = "";
+  } catch (err) {
+    feedback.textContent = "Erreur : " + err.message;
+    feedback.style.color = "var(--rust)";
+    feedback.classList.remove("hidden");
+  }
+});
+</script>
+</body>
+</html>

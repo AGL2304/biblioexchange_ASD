@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiblioExchange — Notifications</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A22; --paper:#EFEAD9; --paper-2:#E5DEC7;
+    --green:#2F4B3C; --green-dark:#1C3227;
+    --brass:#B8863B; --brass-dark:#8C6528;
+    --rust:#A64B2A; --muted:#6B6558; --line:#D8CFB4;
+  }
+  body{background:var(--paper); color:var(--ink); font-family:'Source Sans 3',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+  .font-mono{font-family:'IBM Plex Mono',monospace;}
+  .card{background:rgba(255,255,255,.55); border:1px solid var(--line);}
+  .row-line{border-color:var(--line);}
+  .dot{width:8px;height:8px;border-radius:999px;background:var(--brass);}
+  .nav-link{position:relative;}
+  .nav-link.active::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--brass);}
+  .icon{width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:14px;flex-shrink:0;}
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b" style="border-color:var(--line)">
+  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="index.html" class="font-display text-2xl" style="color:var(--green-dark)">BiblioExchange</a>
+    <nav class="hidden md:flex gap-8 text-sm" style="color:var(--muted)">
+      <a href="index.html" class="nav-link">Accueil</a>
+      <a href="mes-livres.html" class="nav-link">Mes livres</a>
+      <a href="proposer-echange.html" class="nav-link">Échanges</a>
+      <a href="notifications.html" class="nav-link active" style="color:var(--ink)">Notifications</a>
+      <a href="profil.html" class="nav-link">Profil</a>
+    </nav>
+    <div id="auth-slot"></div>
+  </div>
+</header>
+
+<section class="max-w-3xl mx-auto px-6 pt-12 pb-6 flex items-end justify-between">
+  <div>
+    <p class="font-mono text-xs uppercase tracking-widest mb-2" style="color:var(--brass-dark)">Fil de bibliothèque</p>
+    <h1 class="font-display text-3xl" style="color:var(--green-dark)">Notifications</h1>
+  </div>
+  <button class="font-mono text-xs uppercase" style="color:var(--muted)">Tout marquer comme lu</button>
+</section>
+
+<section class="max-w-3xl mx-auto px-6 pb-20">
+  <div class="card rounded-sm" id="notif-list"></div>
+</section>
+
+<script src="js/api.js"></script>
+<script>
+if (!api.isLoggedIn()) window.location.href = "login.html";
+
+function renderNav() {
+  const nav = document.getElementById("auth-slot");
+  if (!nav) return;
+  nav.innerHTML = `<button id="logout-btn" class="font-mono text-xs uppercase" style="color:var(--muted)">Deconnexion</button>`;
+  document.getElementById("logout-btn").addEventListener("click", api.logout);
+}
+renderNav();
+
+function timeAgo(iso) {
+  const diffMin = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (diffMin < 60) return `il y a ${diffMin} min`;
+  if (diffMin < 1440) return `il y a ${Math.round(diffMin / 60)} h`;
+  return `il y a ${Math.round(diffMin / 1440)} j`;
+}
+
+async function loadNotifications() {
+  const list = document.getElementById("notif-list");
+  try {
+    const notifs = await api.notifications();
+    if (notifs.length === 0) {
+      list.innerHTML = `<p class="px-6 py-5 font-mono text-sm" style="color:var(--muted)">Aucune notification pour l'instant.</p>`;
+      return;
+    }
+    list.innerHTML = notifs.map(n => `
+      <div class="flex items-start gap-4 px-6 py-5 border-b row-line last:border-b-0 ${n.read ? 'opacity-70' : ''}" data-id="${n.id}">
+        <div class="icon" style="background:rgba(184,134,59,.1); color:var(--brass-dark)">•</div>
+        <div class="flex-1">
+          <p class="font-display text-base leading-snug" style="color:var(--green-dark)">${n.title}</p>
+          ${n.detail ? `<p class="text-sm mt-1" style="color:var(--muted)">${n.detail}</p>` : ""}
+          <p class="font-mono text-xs mt-2" style="color:var(--muted)">${timeAgo(n.created_at)}</p>
+        </div>
+        ${n.read ? "" : '<div class="dot mt-2 js-mark-read" style="cursor:pointer"></div>'}
+      </div>`).join("");
+
+    list.querySelectorAll(".js-mark-read").forEach(el => {
+      el.addEventListener("click", async (e) => {
+        const id = e.target.closest("[data-id]").dataset.id;
+        await api.markNotificationRead(id);
+        loadNotifications();
+      });
+    });
+  } catch (err) {
+    list.innerHTML = `<p class="px-6 py-5 font-mono text-sm" style="color:var(--rust)">Erreur : ${err.message}</p>`;
+  }
+}
+loadNotifications();
+</script>
+</body>
+</html>

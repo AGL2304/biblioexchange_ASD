@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "biblioexchange-api"
+    static_configs:
+      - targets: ["backend:8000"]
+    metrics_path: /metrics
+
+  - job_name: "node"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+rule_files:
+  - "alerts.yml"

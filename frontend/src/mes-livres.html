@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiblioExchange — Mes livres</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2A22; --paper:#EFEAD9; --paper-2:#E5DEC7;
+    --green:#2F4B3C; --green-dark:#1C3227;
+    --brass:#B8863B; --brass-dark:#8C6528;
+    --rust:#A64B2A; --muted:#6B6558; --line:#D8CFB4;
+  }
+  body{background:var(--paper); color:var(--ink); font-family:'Source Sans 3',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+  .font-mono{font-family:'IBM Plex Mono',monospace;}
+  .row-line{border-color:var(--line);}
+  .stamp{border:1.5px dashed var(--brass-dark); font-family:'IBM Plex Mono',monospace; letter-spacing:.04em;}
+  .stamp-unavail{border-color:var(--rust); color:var(--rust);}
+  .stamp-avail{border-color:var(--green); color:var(--green-dark);}
+  .stamp-nego{border-color:var(--brass-dark); color:var(--brass-dark);}
+  .toggle{position:relative;width:38px;height:20px;background:var(--line);border-radius:999px;cursor:pointer;transition:.2s;}
+  .toggle.on{background:var(--green);}
+  .toggle .dot{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:999px;background:#fff;transition:.2s;}
+  .toggle.on .dot{transform:translateX(18px);}
+  .nav-link{position:relative;}
+  .nav-link.active::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--brass);}
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b" style="border-color:var(--line)">
+  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="index.html" class="font-display text-2xl" style="color:var(--green-dark)">BiblioExchange</a>
+    <nav class="hidden md:flex gap-8 text-sm" style="color:var(--muted)">
+      <a href="index.html" class="nav-link">Accueil</a>
+      <a href="mes-livres.html" class="nav-link active" style="color:var(--ink)">Mes livres</a>
+      <a href="proposer-echange.html" class="nav-link">Échanges</a>
+      <a href="notifications.html" class="nav-link">Notifications</a>
+      <a href="profil.html" class="nav-link">Profil</a>
+    </nav>
+    <div id="auth-slot"></div>
+  </div>
+</header>
+
+<section class="max-w-4xl mx-auto px-6 pt-12 pb-6 flex items-end justify-between flex-wrap gap-4">
+  <div>
+    <p class="font-mono text-xs uppercase tracking-widest mb-2" style="color:var(--brass-dark)">Ma fiche de prêt</p>
+    <h1 class="font-display text-3xl" style="color:var(--green-dark)">Mes livres</h1>
+  </div>
+  <button class="px-5 py-2.5 rounded-sm font-mono text-sm uppercase tracking-wide text-white" style="background:var(--green-dark)">
+    + Publier un livre
+  </button>
+</section>
+
+<section class="max-w-4xl mx-auto px-6 pb-20">
+  <div class="bg-white/50 rounded-sm card">
+    <div id="my-books"></div>
+  </div>
+</section>
+
+<script src="js/api.js"></script>
+<script>
+function renderNav() {
+  const nav = document.getElementById("auth-slot");
+  if (!nav) return;
+  if (api.isLoggedIn()) {
+    nav.innerHTML = `<button id="logout-btn" class="font-mono text-xs uppercase" style="color:var(--muted)">Deconnexion</button>`;
+    document.getElementById("logout-btn").addEventListener("click", api.logout);
+  } else {
+    nav.innerHTML = `<a href="login.html" class="font-mono text-xs uppercase px-3 py-1.5 rounded-sm text-white" style="background:var(--green-dark)">Connexion</a>`;
+  }
+}
+renderNav();
+if (!api.isLoggedIn()) window.location.href = "login.html";
+
+const statusMap = {
+  disponible:{label:"Disponible", cls:"stamp-avail", on:true},
+  indisponible:{label:"Indisponible", cls:"stamp-unavail", on:false},
+  en_negociation:{label:"En négociation", cls:"stamp-nego", on:true, locked:true},
+};
+
+async function renderMyBooks() {
+  const list = document.getElementById("my-books");
+  list.innerHTML = `<p class="px-6 py-5 font-mono text-sm" style="color:var(--muted)">Chargement…</p>`;
+  try {
+    const books = await api.myBooks();
+    if (books.length === 0) {
+      list.innerHTML = `<p class="px-6 py-5 font-mono text-sm" style="color:var(--muted)">Vous n'avez publié aucun livre pour l'instant.</p>`;
+      return;
+    }
+    list.innerHTML = books.map(b => {
+      const s = statusMap[b.statut];
+      const pending = !b.valide_par_admin
+        ? `<span class="font-mono text-[11px]" style="color:var(--rust)">· en attente de validation admin</span>` : "";
+      return `
+      <div class="flex items-center justify-between px-6 py-5 border-b row-line last:border-b-0" data-id="${b.id}">
+        <div>
+          <h3 class="font-display text-lg" style="color:var(--green-dark)">${b.titre}</h3>
+          <p class="text-sm mt-0.5" style="color:var(--muted)">${b.auteur} ${pending}</p>
+        </div>
+        <div class="flex items-center gap-5">
+          <div class="px-2.5 py-1 text-xs stamp ${s.cls}">${s.label}</div>
+          <div class="toggle js-toggle ${s.on ? 'on':''} ${s.locked ? 'opacity-40 pointer-events-none':''}"
+               data-id="${b.id}" data-current="${b.statut}"
+               title="${s.locked ? 'Verrouillé : échange en cours' : 'Basculer disponible / indisponible'}">
+            <div class="dot"></div>
+          </div>
+          <button class="js-delete font-mono text-xs uppercase" data-id="${b.id}" style="color:var(--rust)">Supprimer</button>
+        </div>
+      </div>`;
+    }).join("");
+
+    list.querySelectorAll(".js-toggle:not(.opacity-40)").forEach(el => {
+      el.addEventListener("click", async () => {
+        const next = el.dataset.current === "disponible" ? "indisponible" : "disponible";
+        await api.setBookStatus(el.dataset.id, next);
+        renderMyBooks();
+      });
+    });
+    list.querySelectorAll(".js-delete").forEach(el => {
+      el.addEventListener("click", async () => {
+        if (!confirm("Supprimer ce livre ?")) return;
+        await api.deleteBook(el.dataset.id);
+        renderMyBooks();
+      });
+    });
+  } catch (err) {
+    list.innerHTML = `<p class="px-6 py-5 font-mono text-sm" style="color:var(--rust)">Erreur : ${err.message}</p>`;
+  }
+}
+
+document.querySelector("button.px-5").addEventListener("click", async () => {
+  const titre = prompt("Titre du livre :");
+  if (!titre) return;
+  const auteur = prompt("Auteur :") || "Inconnu";
+  const categorie = prompt("Catégorie (optionnel) :") || null;
+  try {
+    await api.createBook({ titre, auteur, categorie });
+    renderMyBooks();
+  } catch (err) {
+    alert("Erreur : " + err.message);
+  }
+});
+
+renderMyBooks();
+</script>
+</body>
+</html>
