@@ -37,7 +37,7 @@ jobs:
 
       - name: Exécution des tests Pytest (Environnement isolé SQLite)
         env:
-          PYTHONPATH: ./backend
+          PYTHONPATH: ${{ github.workspace }}/backend
           DATABASE_URL: "sqlite:///:memory:"
           SECRET_KEY: "ci_test_secret_key_for_jwt_verification"
         run: |
