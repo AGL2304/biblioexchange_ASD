@@ -32,12 +32,12 @@ jobs:
 
       - name: Contrôle de la qualité du code (Flake8)
         run: |
-          # Arrête le build si des erreurs de syntaxe ou des symboles non définis existent
           flake8 backend/app --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Avertissement pour la complexité et la mise en forme
           flake8 backend/app --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Exécution des tests Pytest (Environnement isolé)
+        env:
+          PYTHONPATH: .
         run: |
           cd backend
           pytest -v --cov=app tests/
