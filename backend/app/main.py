@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.database import Base, engine
 from app.core.metrics import register_business_metrics
@@ -49,6 +50,11 @@ app.include_router(admin_stats.router, prefix="/admin/stats", tags=["admin"])
 
 # Métriques métier custom (échanges, modération, signalements) — voir app/core/metrics.py
 register_business_metrics()
+
+# Instrumentation HTTP automatique (latence, http_requests_total par route/statut)
+# expose=False : on garde un seul point de montage /metrics (ci-dessous), gere par
+# make_asgi_app, plutot que le endpoint /metrics par defaut de l'instrumentator.
+Instrumentator().instrument(app)
 
 # Endpoint Prometheus (bloqué publiquement au niveau de Nginx, voir frontend/nginx.conf)
 app.mount("/metrics", make_asgi_app())
