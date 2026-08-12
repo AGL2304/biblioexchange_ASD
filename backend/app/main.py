@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app
 
 from app.core.database import Base, engine
+from app.core.metrics import register_business_metrics
 from app import models  # noqa: F401  (enregistre les modèles avant create_all)
 from app.routers import (
     auth, users, books, exchanges, rendezvous, notifications, forum, reports,
@@ -45,6 +46,9 @@ app.include_router(admin_books.router, prefix="/admin/books", tags=["admin"])
 app.include_router(admin_exchanges.router, prefix="/admin/exchanges", tags=["admin"])
 app.include_router(admin_reports.router, prefix="/admin/reports", tags=["admin"])
 app.include_router(admin_stats.router, prefix="/admin/stats", tags=["admin"])
+
+# Métriques métier custom (échanges, modération, signalements) — voir app/core/metrics.py
+register_business_metrics()
 
 # Endpoint Prometheus (bloqué publiquement au niveau de Nginx, voir frontend/nginx.conf)
 app.mount("/metrics", make_asgi_app())

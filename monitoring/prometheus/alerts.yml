@@ -17,5 +17,20 @@ groups:
         annotations:
           summary: "Taux d'erreurs 5xx élevé sur l'API"
 
-      # TODO: alerte métier — pic de signalements en attente
-      # (nécessite l'export de la métrique custom depuis /admin/stats/moderation)
+      - alert: PicSignalementsEnAttente
+        expr: biblioexchange_reports_open > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Plus de 5 signalements ouverts depuis 10 minutes"
+          description: "{{ $value }} signalements sont en attente de traitement par un administrateur."
+
+      - alert: FileModerationSaturee
+        expr: biblioexchange_books_pending_moderation > 20
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "File de modération des livres saturée"
+          description: "{{ $value }} livres attendent une validation admin depuis plus de 30 minutes."
