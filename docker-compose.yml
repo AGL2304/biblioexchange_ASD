@@ -1,6 +1,6 @@
 services:
   frontend:
-    build: ./frontend
+    image: agl23/biblioexchange-frontend:${IMAGE_TAG:-latest}
     ports:
       - "8080:80"
     depends_on:
@@ -9,7 +9,7 @@ services:
       - biblioexchange
 
   backend:
-    build: ./backend
+    image: agl23/biblioexchange-backend:${IMAGE_TAG:-latest}
     env_file: .env
     ports:
       - "8000:8000"
